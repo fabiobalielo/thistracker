@@ -42,3 +42,6 @@ next-env.d.ts
 
 # firebase functions
 functions/node_modules
+
+# node_modules everywhere
+**/node_modules/
