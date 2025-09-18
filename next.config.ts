@@ -11,9 +11,10 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Firebase Functions compatibility
+  // Enable standalone output for Cloud Run
   output: "standalone",
-  trailingSlash: true,
+  // Ensure proper handling of trailing slashes
+  trailingSlash: false,
 };
 
 export default nextConfig;

@@ -1,0 +1,57 @@
+name: Set Environment Variables
+
+on:
+  workflow_dispatch:
+    inputs:
+      nextauth_url:
+        description: "NextAuth URL (e.g., https://your-app.run.app)"
+        required: true
+        type: string
+      nextauth_secret:
+        description: "NextAuth Secret (generate a random string)"
+        required: true
+        type: string
+      google_client_id:
+        description: "Google OAuth Client ID"
+        required: true
+        type: string
+      google_client_secret:
+        description: "Google OAuth Client Secret"
+        required: true
+        type: string
+      google_sheets_spreadsheet_id:
+        description: "Google Sheets Spreadsheet ID"
+        required: true
+        type: string
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  SERVICE_NAME: thistracker
+  REGION: us-central1
+
+jobs:
+  set-env-vars:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Google Auth
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Set Environment Variables
+        run: |
+          gcloud run services update $SERVICE_NAME \
+            --region $REGION \
+            --set-env-vars NEXTAUTH_URL="${{ github.event.inputs.nextauth_url }}" \
+            --set-env-vars NEXTAUTH_SECRET="${{ github.event.inputs.nextauth_secret }}" \
+            --set-env-vars GOOGLE_CLIENT_ID="${{ github.event.inputs.google_client_id }}" \
+            --set-env-vars GOOGLE_CLIENT_SECRET="${{ github.event.inputs.google_client_secret }}" \
+            --set-env-vars GOOGLE_SHEETS_SPREADSHEET_ID="${{ github.event.inputs.google_sheets_spreadsheet_id }}"
+
+      - name: Verify Environment Variables
+        run: |
+          gcloud run services describe $SERVICE_NAME --region $REGION --format 'value(spec.template.spec.template.spec.containers[0].env[].name,spec.template.spec.template.spec.containers[0].env[].value)'
