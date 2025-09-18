@@ -90,29 +90,39 @@ export class SheetsSyncService {
   } | null> {
     try {
       // Search for existing unique ThisTracker spreadsheet with exact name match
-      // This prevents multiple files with similar names from being considered
+      // IMPORTANT: Only search for spreadsheets owned by the current user to prevent cross-account data leakage
+      // The 'me' in owners filter ensures each user only sees their own spreadsheets
       const exactQuery =
-        "name='ThisTracker-Main' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false";
-      console.log("Searching for exact ThisTracker spreadsheet:", exactQuery);
+        "name='ThisTracker-Main' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false and 'me' in owners";
+      console.log(
+        "Searching for exact ThisTracker spreadsheet (user-specific):",
+        exactQuery
+      );
       const exactResponse = await this.driveAPI.searchFiles(exactQuery);
 
       if (exactResponse.files && exactResponse.files.length > 0) {
         console.log(
-          "Found exact ThisTracker-Main spreadsheet:",
+          "Found exact ThisTracker-Main spreadsheet owned by current user:",
           exactResponse.files[0].id
         );
         return { spreadsheetId: exactResponse.files[0].id };
       }
 
-      // Fallback: Search for any ThisTracker spreadsheets
+      // Fallback: Search for any ThisTracker spreadsheets owned by the current user
       const query =
-        "name contains 'ThisTracker' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false";
-      console.log("Searching for existing spreadsheets with query:", query);
+        "name contains 'ThisTracker' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false and 'me' in owners";
+      console.log(
+        "Searching for existing spreadsheets with query (user-specific):",
+        query
+      );
       const response = await this.driveAPI.searchFiles(query);
       console.log("Drive API search response:", response);
 
       if (response.files && response.files.length > 0) {
-        console.log("Found files:", response.files.length);
+        console.log(
+          "Found files owned by current user:",
+          response.files.length
+        );
         // Find the most recent ThisTracker spreadsheet
         const spreadsheets = response.files
           .filter((file: { name: string; createdTime: string }) =>
@@ -124,11 +134,14 @@ export class SheetsSyncService {
               new Date(a.createdTime).getTime()
           );
 
-        console.log("Filtered spreadsheets:", spreadsheets.length);
+        console.log(
+          "Filtered spreadsheets owned by current user:",
+          spreadsheets.length
+        );
 
         if (spreadsheets.length > 0) {
           console.log(
-            "Found existing ThisTracker spreadsheet:",
+            "Found existing ThisTracker spreadsheet owned by current user:",
             spreadsheets[0].name,
             "ID:",
             spreadsheets[0].id
@@ -137,7 +150,7 @@ export class SheetsSyncService {
         }
       }
 
-      console.log("No existing spreadsheets found");
+      console.log("No existing spreadsheets found for current user");
       return null;
     } catch (error) {
       console.error("Error searching for existing spreadsheet:", error);
@@ -147,14 +160,16 @@ export class SheetsSyncService {
 
   private async generateUniqueSpreadsheetName(): Promise<string> {
     // First, try to create the main spreadsheet with a consistent name
+    // Note: Each user will get their own "ThisTracker-Main" spreadsheet
     const mainName = "ThisTracker-Main";
 
     try {
-      const query = `name='${mainName}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`;
+      // Only check if the current user has a spreadsheet with this name
+      const query = `name='${mainName}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false and 'me' in owners`;
       const response = await this.driveAPI.searchFiles(query);
 
       if (!response.files || response.files.length === 0) {
-        // Main name is available
+        // Main name is available for current user
         console.log("Using main ThisTracker spreadsheet name:", mainName);
         return mainName;
       }
@@ -162,27 +177,27 @@ export class SheetsSyncService {
       console.warn("Error checking main name availability:", error);
     }
 
-    // Fallback: create with timestamp if main name is taken
+    // Fallback: create with timestamp if main name is taken by current user
     const baseName = "ThisTracker";
     const timestamp = new Date().toISOString().split("T")[0];
     const randomSuffix = Math.random().toString(36).substring(2, 8);
 
-    // Try to find a unique name by checking existing files
+    // Try to find a unique name by checking existing files owned by current user
     let attempt = 0;
     let name = `${baseName}-${timestamp}-${randomSuffix}`;
 
     while (attempt < 10) {
       try {
-        const query = `name='${name}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`;
+        const query = `name='${name}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false and 'me' in owners`;
         const response = await this.driveAPI.searchFiles(query);
 
         if (!response.files || response.files.length === 0) {
-          // Name is unique
+          // Name is unique for current user
           console.log("Generated unique spreadsheet name:", name);
           return name;
         }
 
-        // Name exists, try again with different suffix
+        // Name exists for current user, try again with different suffix
         attempt++;
         const newSuffix = Math.random().toString(36).substring(2, 8);
         name = `${baseName}-${timestamp}-${newSuffix}`;
