@@ -7,6 +7,9 @@ const GOOGLE_APIS = {
   sheets: "https://sheets.googleapis.com/v4",
 } as const;
 
+// Note: Using drive.file scope means we can only access files created by this app
+// This is perfect for privacy - users only grant access to files we create
+
 // Helper function to get access token from session
 export async function getGoogleAccessToken() {
   try {
@@ -72,6 +75,8 @@ export class GoogleDriveAPI {
 
   async searchFiles(query: string) {
     const params = new URLSearchParams();
+    // With drive.file scope, we can only access files created by this app
+    // So we don't need the 'me' in owners filter - all files are already user-scoped
     params.append("q", query);
     params.append("fields", "files(id,name,mimeType,createdTime,modifiedTime)");
 
