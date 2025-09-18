@@ -38,10 +38,22 @@ export class SheetsSyncService {
           );
         }
 
-        // Ensure all required sheets exist
-        await this.ensureRequiredSheetsExist();
-
-        return this.config;
+        // CRITICAL: Validate that the spreadsheet belongs to the current user
+        const isOwnedByUser = await this.sheetsAPI.validateSpreadsheetOwnership(
+          this.config.spreadsheetId
+        );
+        if (!isOwnedByUser) {
+          console.error(
+            "Found spreadsheet but it doesn't belong to current user, creating new one"
+          );
+          // Reset config and create new spreadsheet
+          this.config.spreadsheetId = "";
+        } else {
+          console.log("Spreadsheet ownership validated for current user");
+          // Ensure all required sheets exist
+          await this.ensureRequiredSheetsExist();
+          return this.config;
+        }
       }
 
       // Create new spreadsheet with unique name

@@ -3,9 +3,7 @@ import { authOptions } from "@/lib/auth-config";
 
 // Google API endpoints
 const GOOGLE_APIS = {
-  calendar: "https://www.googleapis.com/calendar/v3",
   drive: "https://www.googleapis.com/drive/v3",
-  docs: "https://docs.googleapis.com/v1",
   sheets: "https://sheets.googleapis.com/v4",
 } as const;
 
@@ -18,6 +16,7 @@ export async function getGoogleAccessToken() {
       hasAccessToken: !!(session as { accessToken?: string })?.accessToken,
       hasError: !!(session as { error?: string })?.error,
       sessionKeys: session ? Object.keys(session) : [],
+      userEmail: (session as { user?: { email?: string } })?.user?.email,
     });
 
     if (!session) {
@@ -26,6 +25,7 @@ export async function getGoogleAccessToken() {
 
     const accessToken = (session as { accessToken?: string })?.accessToken;
     const error = (session as { error?: string })?.error;
+    const userEmail = (session as { user?: { email?: string } })?.user?.email;
 
     if (error) {
       throw new Error(`Session error: ${error}. Please sign in again.`);
@@ -37,63 +37,15 @@ export async function getGoogleAccessToken() {
       );
     }
 
-    console.log("Access token retrieved successfully");
+    if (!userEmail) {
+      throw new Error("No user email found in session. Please sign in again.");
+    }
+
+    console.log(`Access token retrieved successfully for user: ${userEmail}`);
     return accessToken;
   } catch (error) {
     console.error("Error getting Google access token:", error);
     throw error;
-  }
-}
-
-// Google Calendar API helpers
-export class GoogleCalendarAPI {
-  private accessToken: string;
-
-  constructor(accessToken: string) {
-    this.accessToken = accessToken;
-  }
-
-  async getCalendars() {
-    const response = await fetch(
-      `${GOOGLE_APIS.calendar}/users/me/calendarList`,
-      {
-        headers: {
-          Authorization: `Bearer ${this.accessToken}`,
-        },
-      }
-    );
-    return response.json();
-  }
-
-  async createEvent(calendarId: string, event: unknown) {
-    const response = await fetch(
-      `${GOOGLE_APIS.calendar}/calendars/${calendarId}/events`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${this.accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(event),
-      }
-    );
-    return response.json();
-  }
-
-  async getEvents(calendarId: string, timeMin?: string, timeMax?: string) {
-    const params = new URLSearchParams();
-    if (timeMin) params.append("timeMin", timeMin);
-    if (timeMax) params.append("timeMax", timeMax);
-
-    const response = await fetch(
-      `${GOOGLE_APIS.calendar}/calendars/${calendarId}/events?${params}`,
-      {
-        headers: {
-          Authorization: `Bearer ${this.accessToken}`,
-        },
-      }
-    );
-    return response.json();
   }
 }
 
@@ -157,58 +109,6 @@ export class GoogleDriveAPI {
   }
 }
 
-// Google Docs API helpers
-export class GoogleDocsAPI {
-  private accessToken: string;
-
-  constructor(accessToken: string) {
-    this.accessToken = accessToken;
-  }
-
-  async createDocument(title: string) {
-    const response = await fetch(`${GOOGLE_APIS.docs}/documents`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${this.accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        title,
-      }),
-    });
-    return response.json();
-  }
-
-  async getDocument(documentId: string) {
-    const response = await fetch(
-      `${GOOGLE_APIS.docs}/documents/${documentId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${this.accessToken}`,
-        },
-      }
-    );
-    return response.json();
-  }
-
-  async updateDocument(documentId: string, requests: unknown[]) {
-    const response = await fetch(
-      `${GOOGLE_APIS.docs}/documents/${documentId}:batchUpdate`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${this.accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          requests,
-        }),
-      }
-    );
-    return response.json();
-  }
-}
-
 // Google Sheets API helpers
 export class GoogleSheetsAPI {
   private accessToken: string;
@@ -217,11 +117,50 @@ export class GoogleSheetsAPI {
     this.accessToken = accessToken;
   }
 
+  // Helper method to ensure all API calls include proper user scoping
+  private getAuthHeaders() {
+    return {
+      Authorization: `Bearer ${this.accessToken}`,
+    };
+  }
+
+  // Validate that the spreadsheet belongs to the current user
+  async validateSpreadsheetOwnership(spreadsheetId: string): Promise<boolean> {
+    try {
+      console.log(
+        `Validating ownership of spreadsheet ${spreadsheetId} for current user`
+      );
+      const response = await fetch(
+        `${GOOGLE_APIS.sheets}/spreadsheets/${spreadsheetId}`,
+        {
+          headers: this.getAuthHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        console.log(
+          `Spreadsheet ${spreadsheetId} not accessible to current user`
+        );
+        return false;
+      }
+
+      const spreadsheet = await response.json();
+      console.log(
+        `Spreadsheet ${spreadsheetId} is accessible to current user: ${spreadsheet.properties?.title}`
+      );
+      return true;
+    } catch (error) {
+      console.error(`Error validating spreadsheet ownership: ${error}`);
+      return false;
+    }
+  }
+
   async createSpreadsheet(title: string) {
+    console.log(`Creating spreadsheet "${title}" for authenticated user`);
     const response = await fetch(`${GOOGLE_APIS.sheets}/spreadsheets`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${this.accessToken}`,
+        ...this.getAuthHeaders(),
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -234,14 +173,14 @@ export class GoogleSheetsAPI {
   }
 
   async getSpreadsheet(spreadsheetId: string) {
-    console.log(`Fetching spreadsheet metadata for ID: ${spreadsheetId}`);
+    console.log(
+      `Fetching spreadsheet metadata for ID: ${spreadsheetId} (user-scoped)`
+    );
 
     const response = await fetch(
       `${GOOGLE_APIS.sheets}/spreadsheets/${spreadsheetId}`,
       {
-        headers: {
-          Authorization: `Bearer ${this.accessToken}`,
-        },
+        headers: this.getAuthHeaders(),
       }
     );
 
@@ -277,7 +216,7 @@ export class GoogleSheetsAPI {
     sheetName?: string
   ) {
     console.log(
-      `Updating sheet ${spreadsheetId}, range: ${range}, values: ${values.length} rows`
+      `Updating sheet ${spreadsheetId}, range: ${range}, values: ${values.length} rows (user-scoped)`
     );
 
     const response = await fetch(
@@ -285,7 +224,7 @@ export class GoogleSheetsAPI {
       {
         method: "PUT",
         headers: {
-          Authorization: `Bearer ${this.accessToken}`,
+          ...this.getAuthHeaders(),
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -312,15 +251,13 @@ export class GoogleSheetsAPI {
 
   async getSheetValues(spreadsheetId: string, range: string) {
     console.log(
-      `Fetching sheet values for spreadsheet ${spreadsheetId}, range: ${range}`
+      `Fetching sheet values for spreadsheet ${spreadsheetId}, range: ${range} (user-scoped)`
     );
 
     const response = await fetch(
       `${GOOGLE_APIS.sheets}/spreadsheets/${spreadsheetId}/values/${range}`,
       {
-        headers: {
-          Authorization: `Bearer ${this.accessToken}`,
-        },
+        headers: this.getAuthHeaders(),
       }
     );
 
@@ -352,7 +289,7 @@ export class GoogleSheetsAPI {
 
   async batchUpdate(spreadsheetId: string, requests: unknown[]) {
     console.log(
-      `Performing batch update on spreadsheet ${spreadsheetId} with ${requests.length} requests`
+      `Performing batch update on spreadsheet ${spreadsheetId} with ${requests.length} requests (user-scoped)`
     );
 
     const response = await fetch(
@@ -360,7 +297,7 @@ export class GoogleSheetsAPI {
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${this.accessToken}`,
+          ...this.getAuthHeaders(),
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -402,9 +339,7 @@ export async function createGoogleAPIs() {
   }
 
   return {
-    calendar: new GoogleCalendarAPI(accessToken),
     drive: new GoogleDriveAPI(accessToken),
-    docs: new GoogleDocsAPI(accessToken),
     sheets: new GoogleSheetsAPI(accessToken),
   };
 }

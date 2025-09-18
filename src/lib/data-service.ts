@@ -29,7 +29,9 @@ export class DataService {
 
   async initialize(): Promise<void> {
     try {
-      console.log("Initializing DataService with Google Sheets integration");
+      console.log(
+        "Initializing DataService with Google Sheets integration (user-scoped)"
+      );
       const config = await this.sheetsSync.initializeSpreadsheet();
       this.config = config;
 
@@ -40,7 +42,7 @@ export class DataService {
       }
 
       console.log(
-        "DataService initialized successfully with spreadsheet:",
+        "DataService initialized successfully with user-scoped spreadsheet:",
         this.config.spreadsheetId
       );
     } catch (error) {

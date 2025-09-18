@@ -15,10 +15,12 @@ async function getDataService() {
 
 export async function GET() {
   try {
-    console.log("API: Starting data fetch...");
+    console.log("API: Starting user-scoped data fetch...");
 
     const service = await getDataService();
-    console.log("API: DataService initialized successfully");
+    console.log(
+      "API: DataService initialized successfully for authenticated user"
+    );
 
     // Fetch all data in a single operation
     console.log("API: Fetching data from Google Sheets...");
