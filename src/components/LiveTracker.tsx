@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { TimeEntry, Task, Project, Client } from "@/lib/types";
+import { TimeEntry, Task } from "@/lib/types";
 import { useData } from "@/contexts/DataContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+
 import {
   Select,
   SelectContent,
@@ -151,7 +151,7 @@ const LiveTracker: React.FC<LiveTrackerProps> = ({ className = "" }) => {
       projectId: selectedProject.id,
       clientId: selectedClient.id,
       description: description.trim(),
-      startTime: startTime.toISOString(),
+      startTime: startTime,
       hourlyRate: hourlyRate ? parseFloat(hourlyRate) : undefined,
       notes: notes.trim() || undefined,
       createdAt: startTime,
@@ -250,7 +250,7 @@ const LiveTracker: React.FC<LiveTrackerProps> = ({ className = "" }) => {
 
     // Update data context immediately with optimistic data
     updateTimeEntry(activeTimeEntry.id, {
-      endTime: endTime.toISOString(),
+      endTime: endTime,
       duration,
       totalAmount,
       updatedAt: endTime,

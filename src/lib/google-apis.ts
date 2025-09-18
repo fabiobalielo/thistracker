@@ -250,12 +250,7 @@ export class GoogleSheetsAPI {
     return result;
   }
 
-  async updateSheet(
-    spreadsheetId: string,
-    range: string,
-    values: unknown[][],
-    sheetName?: string
-  ) {
+  async updateSheet(spreadsheetId: string, range: string, values: unknown[][]) {
     console.log(
       `Updating sheet ${spreadsheetId}, range: ${range}, values: ${values.length} rows (user-scoped)`
     );
