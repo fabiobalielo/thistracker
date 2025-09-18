@@ -50,7 +50,7 @@ scripts/
 
 # Service account keys
 service-account-key.json
-*.json
+# Note: package.json and pnpm-lock.yaml are needed for Docker build
 
 # Logs
 *.log
