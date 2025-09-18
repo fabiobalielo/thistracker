@@ -6,18 +6,26 @@ import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Cog6ToothIcon, ClockIcon } from "@heroicons/react/24/outline";
+import { useData } from "@/contexts/DataContext";
+import {
+  Cog6ToothIcon,
+  ClockIcon,
+  ArrowPathIcon,
+} from "@heroicons/react/24/outline";
 
-export default function Home() {
+interface AppLayoutProps {
+  children: React.ReactNode;
+}
+
+export default function AppLayout({ children }: AppLayoutProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { actualTheme } = useTheme();
+  const { syncData, isSyncing } = useData();
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
-    } else if (status === "authenticated") {
-      router.push("/dashboard");
     }
   }, [status, router]);
 
@@ -45,14 +53,14 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-3">
+              <Link href="/dashboard" className="flex items-center space-x-3">
                 <div className="w-8 h-8 rounded-tahoe bg-gradient-to-br from-macaw-red-500 to-macaw-green-500 flex items-center justify-center">
                   <ClockIcon className="h-5 w-5 text-white" />
                 </div>
                 <h1 className="text-xl font-semibold text-tahoe-text-primary-light dark:text-tahoe-text-primary-dark">
                   ThisTracker
                 </h1>
-              </div>
+              </Link>
             </div>
 
             <div className="flex items-center space-x-4">
@@ -71,22 +79,16 @@ export default function Home() {
                   Tasks
                 </Link>
                 <Link
-                  href="/projects"
-                  className="px-3 py-2 rounded-tahoe text-sm font-medium text-tahoe-text-secondary-light dark:text-tahoe-text-secondary-dark hover:bg-tahoe-surface-secondary hover:text-tahoe-text-primary-light dark:hover:text-tahoe-text-primary-dark transition-colors"
-                >
-                  Projects
-                </Link>
-                <Link
                   href="/clients"
                   className="px-3 py-2 rounded-tahoe text-sm font-medium text-tahoe-text-secondary-light dark:text-tahoe-text-secondary-dark hover:bg-tahoe-surface-secondary hover:text-tahoe-text-primary-light dark:hover:text-tahoe-text-primary-dark transition-colors"
                 >
                   Clients
                 </Link>
                 <Link
-                  href="/time-entries"
+                  href="/projects"
                   className="px-3 py-2 rounded-tahoe text-sm font-medium text-tahoe-text-secondary-light dark:text-tahoe-text-secondary-dark hover:bg-tahoe-surface-secondary hover:text-tahoe-text-primary-light dark:hover:text-tahoe-text-primary-dark transition-colors"
                 >
-                  Time Entries
+                  Projects
                 </Link>
                 <Link
                   href="/settings"
@@ -98,6 +100,21 @@ export default function Home() {
 
               {/* User Menu */}
               <div className="flex items-center space-x-3">
+                {/* Sync Button */}
+                <button
+                  onClick={syncData}
+                  disabled={isSyncing}
+                  className="flex items-center space-x-2 px-3 py-2 rounded-tahoe text-sm font-medium text-tahoe-text-secondary-light dark:text-tahoe-text-secondary-dark hover:bg-tahoe-surface-secondary hover:text-tahoe-text-primary-light dark:hover:text-tahoe-text-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Sync data with Google Sheets"
+                >
+                  <ArrowPathIcon
+                    className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`}
+                  />
+                  <span className="hidden sm:inline">
+                    {isSyncing ? "Syncing..." : "Sync"}
+                  </span>
+                </button>
+
                 <div className="flex items-center space-x-3 px-3 py-2 rounded-tahoe hover:bg-tahoe-surface-secondary transition-colors">
                   <Image
                     className="h-8 w-8 rounded-full ring-2 ring-macaw-red-500"
@@ -135,25 +152,9 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Redirecting message */}
+      {/* Main Content */}
       <main className="min-h-screen bg-gradient-to-br from-tahoe-surface-light to-tahoe-surface-secondary dark:from-tahoe-surface-dark dark:to-tahoe-surface-secondary">
-        <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-tahoe-text-primary-light dark:text-tahoe-text-primary-dark mb-4">
-              Redirecting to Dashboard...
-            </h1>
-            <p className="text-tahoe-text-secondary-light dark:text-tahoe-text-secondary-dark">
-              If you are not redirected automatically,{" "}
-              <Link
-                href="/dashboard"
-                className="text-macaw-red-500 hover:underline"
-              >
-                click here
-              </Link>
-              .
-            </p>
-          </div>
-        </div>
+        {children}
       </main>
     </div>
   );

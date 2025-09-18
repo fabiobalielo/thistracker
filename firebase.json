@@ -1,0 +1,17 @@
+{
+  "hosting": {
+    "site": "thistracker",
+    "rewrites": [
+      {
+        "source": "**",
+        "function": "nextjsFunc"
+      }
+    ]
+  },
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs22",
+    "installDependencies": true,
+    "predeploy": "cd functions && pnpm install"
+  }
+}

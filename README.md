@@ -1,24 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ThisTracker
+
+A modern time tracking application built with Next.js and integrated with Google's productivity suite.
+
+## Features
+
+- ⏱️ **Time Tracking** - Start/stop timer with task descriptions
+- 📅 **Google Calendar Integration** - Save time entries as calendar events
+- 📊 **Google Sheets Export** - Export time tracking data to spreadsheets
+- 💾 **Google Drive Storage** - Store time tracking files in the cloud
+- 📄 **Google Docs Integration** - Generate time tracking reports
+- 🔐 **Google OAuth Authentication** - Secure login with Google account
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Node.js 18+
+- pnpm (recommended) or npm
+- Google Cloud Project with OAuth credentials
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Installation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Clone the repository
+2. Install dependencies:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   ```bash
+   pnpm install
+   ```
+
+3. Set up environment variables:
+
+   ```bash
+   cp .env.local.example .env.local
+   # Edit .env.local with your Google OAuth credentials
+   ```
+
+4. Start the development server:
+
+   ```bash
+   pnpm dev
+   ```
+
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+### Google OAuth Setup
+
+See [GOOGLE_APIS_SETUP.md](./GOOGLE_APIS_SETUP.md) for detailed instructions on setting up Google OAuth and API access.
 
 ## Learn More
 

@@ -1,26 +1,512 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@custom-variant dark (&:is(.dark *));
+
+/* Tahoe OS 2025 Design System */
+@theme {
+  /* Colors */
+  --color-background: #f8fafc;
+  --color-foreground: #1e293b;
+  --color-surface: #ffffff;
+  --color-surface-secondary: #f1f5f9;
+  --color-border: #e2e8f0;
+  --color-text-primary: #1e293b;
+  --color-text-secondary: #64748b;
+  --color-text-muted: #94a3b8;
+
+  /* Arara Vermelha Brand Colors */
+  --color-macaw-red-50: #fef2f2;
+  --color-macaw-red-100: #fee2e2;
+  --color-macaw-red-200: #fecaca;
+  --color-macaw-red-300: #fca5a5;
+  --color-macaw-red-400: #f87171;
+  --color-macaw-red-500: #d71920;
+  --color-macaw-red-600: #dc2626;
+  --color-macaw-red-700: #b91c1c;
+  --color-macaw-red-800: #991b1b;
+  --color-macaw-red-900: #7f1d1d;
+  --color-macaw-red-950: #450a0a;
+
+  --color-macaw-green-50: #f0fdf4;
+  --color-macaw-green-100: #dcfce7;
+  --color-macaw-green-200: #bbf7d0;
+  --color-macaw-green-300: #86efac;
+  --color-macaw-green-400: #4ade80;
+  --color-macaw-green-500: #3a9d23;
+  --color-macaw-green-600: #16a34a;
+  --color-macaw-green-700: #15803d;
+  --color-macaw-green-800: #166534;
+  --color-macaw-green-900: #14532d;
+  --color-macaw-green-950: #052e16;
+
+  --color-macaw-blue-50: #eff6ff;
+  --color-macaw-blue-100: #dbeafe;
+  --color-macaw-blue-200: #bfdbfe;
+  --color-macaw-blue-300: #93c5fd;
+  --color-macaw-blue-400: #60a5fa;
+  --color-macaw-blue-500: #1e90ff;
+  --color-macaw-blue-600: #2563eb;
+  --color-macaw-blue-700: #1d4ed8;
+  --color-macaw-blue-800: #1e40af;
+  --color-macaw-blue-900: #1e3a8a;
+  --color-macaw-blue-950: #172554;
+
+  /* Tahoe Glass Colors */
+  --color-tahoe-glass-light: rgba(255, 255, 255, 0.8);
+  --color-tahoe-glass-dark: rgba(0, 0, 0, 0.6);
+  --color-tahoe-glass-border: rgba(255, 255, 255, 0.2);
+  --color-tahoe-surface-light: #f8fafc;
+  --color-tahoe-surface-dark: #0f172a;
+  --color-tahoe-text-primary-light: #1e293b;
+  --color-tahoe-text-primary-dark: #f1f5f9;
+  --color-tahoe-text-secondary-light: #64748b;
+  --color-tahoe-text-secondary-dark: #94a3b8;
+
+  /* Typography */
+  --font-family-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-family-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* Spacing & Sizing */
+  --radius-tahoe: 12px;
+  --radius-tahoe-lg: 16px;
+  --radius-tahoe-xl: 20px;
+
+  /* Shadows */
+  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  --shadow-glass-inset: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  --shadow-tahoe: 0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-tahoe-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  /* Animations */
+  --animate-fade-in: fadeIn 0.5s ease-in-out;
+  --animate-slide-up: slideUp 0.3s ease-out;
+  --animate-slide-down: slideDown 0.3s ease-out;
+  --animate-scale-in: scaleIn 0.2s ease-out;
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Dark mode overrides using CSS custom properties */
+.dark {
+  --color-background: #0f172a;
+  --color-foreground: #f1f5f9;
+  --color-surface: #1e293b;
+  --color-surface-secondary: #334155;
+  --color-border: #475569;
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+  --color-tahoe-glass-light: rgba(0, 0, 0, 0.6);
+  --color-tahoe-glass-border: rgba(255, 255, 255, 0.1);
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Keyframes */
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
   }
 }
 
+@keyframes slideUp {
+  0% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  0% {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-family-sans);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Glass morphism utility classes */
+.glass {
+  background: var(--color-tahoe-glass-light);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--color-tahoe-glass-border);
+  box-shadow: var(--shadow-glass);
+}
+
+.dark .glass {
+  background: var(--color-tahoe-glass-light);
+  border: 1px solid var(--color-tahoe-glass-border);
+}
+
+.glass-light {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* Tahoe design system components */
+.tahoe-card {
+  background: var(--color-tahoe-glass-light);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--color-tahoe-glass-border);
+  box-shadow: var(--shadow-glass);
+  border-radius: var(--radius-tahoe-lg);
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.tahoe-card:hover {
+  box-shadow: var(--shadow-tahoe-lg);
+}
+
+.dark .tahoe-card {
+  background: var(--color-tahoe-glass-light);
+  border: 1px solid var(--color-tahoe-glass-border);
+}
+
+.tahoe-button {
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-radius: var(--radius-tahoe);
+  border: none;
+  cursor: pointer;
+}
+
+.tahoe-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-macaw-blue-500),
+    0 0 0 4px rgba(30, 144, 255, 0.2);
+}
+
+.tahoe-button-primary {
+  background-color: var(--color-macaw-red-500);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-radius: var(--radius-tahoe);
+  border: none;
+  cursor: pointer;
+}
+
+.tahoe-button-primary:hover {
+  background-color: var(--color-macaw-red-600);
+}
+
+.tahoe-button-primary:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-macaw-blue-500),
+    0 0 0 4px rgba(30, 144, 255, 0.2);
+}
+
+.tahoe-button-secondary {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-radius: var(--radius-tahoe);
+  border: none;
+  cursor: pointer;
+}
+
+.tahoe-button-secondary:hover {
+  opacity: 0.8;
+}
+
+.tahoe-button-secondary:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-macaw-blue-500),
+    0 0 0 4px rgba(30, 144, 255, 0.2);
+}
+
+.tahoe-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-tahoe);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  transition: all 0.2s ease;
+}
+
+.tahoe-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-macaw-blue-500);
+  border-color: transparent;
+}
+
+.tahoe-input::placeholder {
+  color: var(--color-text-secondary);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface-secondary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-text-muted);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
+}
+
+/* Selection styles */
+::selection {
+  background: var(--color-macaw-red-500);
+  color: white;
+}
+
+/* Focus ring utility */
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-macaw-blue-500),
+    0 0 0 4px rgba(30, 144, 255, 0.2);
+}
+
+/* Animation utilities */
+.animate-in {
+  animation: var(--animate-fade-in);
+}
+
+.animate-slide-up {
+  animation: var(--animate-slide-up);
+}
+
+.animate-slide-down {
+  animation: var(--animate-slide-down);
+}
+
+.animate-scale-in {
+  animation: var(--animate-scale-in);
+}
+
+/* Backdrop blur utilities for Tailwind v4 */
+.backdrop-blur-xs {
+  backdrop-filter: blur(2px);
+}
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+}
+.backdrop-blur {
+  backdrop-filter: blur(8px);
+}
+.backdrop-blur-md {
+  backdrop-filter: blur(12px);
+}
+.backdrop-blur-lg {
+  backdrop-filter: blur(16px);
+}
+.backdrop-blur-xl {
+  backdrop-filter: blur(24px);
+}
+.backdrop-blur-2xl {
+  backdrop-filter: blur(32px);
+}
+.backdrop-blur-3xl {
+  backdrop-filter: blur(64px);
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.09 0 0);
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.09 0 0);
+  --card-foreground: oklch(0.98 0 0);
+  --popover: oklch(0.09 0 0);
+  --popover-foreground: oklch(0.98 0 0);
+  --primary: oklch(0.98 0 0);
+  --primary-foreground: oklch(0.09 0 0);
+  --secondary: oklch(0.15 0 0);
+  --secondary-foreground: oklch(0.98 0 0);
+  --muted: oklch(0.15 0 0);
+  --muted-foreground: oklch(0.65 0 0);
+  --accent: oklch(0.15 0 0);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.2 0 0);
+  --input: oklch(0.2 0 0);
+  --ring: oklch(0.65 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.09 0 0);
+  --sidebar-foreground: oklch(0.98 0 0);
+  --sidebar-primary: oklch(0.98 0 0);
+  --sidebar-primary-foreground: oklch(0.09 0 0);
+  --sidebar-accent: oklch(0.15 0 0);
+  --sidebar-accent-foreground: oklch(0.98 0 0);
+  --sidebar-border: oklch(0.2 0 0);
+  --sidebar-ring: oklch(0.65 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
