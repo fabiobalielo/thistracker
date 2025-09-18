@@ -16,13 +16,7 @@ async function getDataService() {
 export async function GET() {
   try {
     console.log("API: Starting data fetch...");
-    console.log("API: Environment check:", {
-      hasGoogleClientId: !!process.env.GOOGLE_CLIENT_ID,
-      hasGoogleClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
-      hasNextAuthUrl: !!process.env.NEXTAUTH_URL,
-      hasNextAuthSecret: !!process.env.NEXTAUTH_SECRET,
-    });
-    
+
     const service = await getDataService();
     console.log("API: DataService initialized successfully");
 
@@ -125,9 +119,9 @@ export async function GET() {
 
     console.error("API: Returning generic error response");
     return NextResponse.json(
-      { 
+      {
         error: "Failed to fetch data",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );

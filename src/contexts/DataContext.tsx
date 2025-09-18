@@ -5,6 +5,7 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useCallback,
   ReactNode,
 } from "react";
 import { useSession } from "next-auth/react";
@@ -73,7 +74,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   const [error, setError] = useState<string | null>(null);
 
   // Clear all data (used when user logs out)
-  const clearData = () => {
+  const clearData = useCallback(() => {
     console.log("DataContext: Clearing all data due to logout");
     setClients([]);
     setProjects([]);
@@ -81,10 +82,10 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     setTimeEntries([]);
     setError(null);
     setIsLoading(false);
-  };
+  }, []);
 
   // Fetch data from API
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     // Don't fetch data if user is not authenticated
     if (status === "unauthenticated" || !session) {
       console.log("DataContext: User not authenticated, clearing data");
@@ -173,7 +174,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       console.error("DataContext: Error fetching data:", error);
       setError(error instanceof Error ? error.message : "Failed to fetch data");
     }
-  };
+  }, [status, session, clearData]);
 
   // Sync all data
   const syncData = async () => {
