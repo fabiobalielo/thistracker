@@ -144,35 +144,59 @@ const LiveTracker: React.FC<LiveTrackerProps> = ({ className = "" }) => {
       return;
     }
 
+    // Create optimistic time entry data
+    const optimisticTimeEntry: TimeEntry = {
+      id: `temp-${Date.now()}`, // Temporary ID
+      taskId: selectedTaskId,
+      projectId: selectedProject.id,
+      clientId: selectedClient.id,
+      description: description.trim(),
+      startTime: startTime.toISOString(),
+      hourlyRate: hourlyRate ? parseFloat(hourlyRate) : undefined,
+      notes: notes.trim() || undefined,
+      createdAt: startTime,
+      updatedAt: startTime,
+      isActive: true,
+    };
+
+    // Update UI immediately (optimistic update)
+    setActiveTimeEntry(optimisticTimeEntry);
+    setIsRunning(true);
+    setElapsedTime(0);
+
+    // Add to data context immediately
+    addTimeEntry(optimisticTimeEntry);
+
+    // Store form data for server call
+    const timeEntryData = {
+      taskId: selectedTaskId,
+      description: description.trim(),
+      startTime: startTime.toISOString(),
+      hourlyRate: hourlyRate ? parseFloat(hourlyRate) : undefined,
+      notes: notes.trim() || undefined,
+    };
+
+    // Sync with server in background
     try {
-      // Create time entry on server first
       const response = await fetch("/api/time-entries", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          taskId: selectedTaskId,
-          description: description.trim(),
-          startTime: startTime.toISOString(),
-          hourlyRate: hourlyRate ? parseFloat(hourlyRate) : undefined,
-          notes: notes.trim() || undefined,
-        }),
+        body: JSON.stringify(timeEntryData),
       });
 
       if (response.ok) {
         const serverTimeEntry = await response.json();
         console.log("Server created time entry:", serverTimeEntry);
 
-        // Update local state with server response
+        // Update with real data from server
+        updateTimeEntry(optimisticTimeEntry.id, serverTimeEntry);
+
+        // Update active time entry with server data
         setActiveTimeEntry(serverTimeEntry);
-        setIsRunning(true);
-        setElapsedTime(0);
 
-        // Add to data context
-        addTimeEntry(serverTimeEntry);
-
-        // Trigger background sync
+        // Trigger background sync to ensure consistency
         syncAfterUpdate();
       } else {
         const errorData = await response.text();
@@ -181,10 +205,24 @@ const LiveTracker: React.FC<LiveTrackerProps> = ({ className = "" }) => {
           statusText: response.statusText,
           error: errorData,
         });
+
+        // If server call fails, remove the optimistic update
+        removeTimeEntry(optimisticTimeEntry.id);
+        setActiveTimeEntry(null);
+        setIsRunning(false);
+        setElapsedTime(0);
+
         alert("Failed to start timer. Please try again.");
       }
     } catch (error) {
       console.error("Error creating time entry:", error);
+
+      // Remove the optimistic update on error
+      removeTimeEntry(optimisticTimeEntry.id);
+      setActiveTimeEntry(null);
+      setIsRunning(false);
+      setElapsedTime(0);
+
       alert(
         "Failed to start timer. Please check your connection and try again."
       );
@@ -203,25 +241,39 @@ const LiveTracker: React.FC<LiveTrackerProps> = ({ className = "" }) => {
       ? (duration / (1000 * 60 * 60)) * activeTimeEntry.hourlyRate
       : undefined;
 
-    // Update local state immediately
+    // Store original data for rollback
+    const originalTimeEntry = { ...activeTimeEntry };
+
+    // Update UI immediately (optimistic update)
     setIsRunning(false);
     setElapsedTime(duration);
 
+    // Update data context immediately with optimistic data
+    updateTimeEntry(activeTimeEntry.id, {
+      endTime: endTime.toISOString(),
+      duration,
+      totalAmount,
+      updatedAt: endTime,
+    });
+
+    // Store request data for server call
+    const requestData = {
+      taskId: activeTimeEntry.taskId,
+      description: activeTimeEntry.description,
+      startTime: new Date(activeTimeEntry.startTime).toISOString(),
+      endTime: endTime.toISOString(),
+      hourlyRate: activeTimeEntry.hourlyRate,
+      notes: activeTimeEntry.notes,
+    };
+
+    // Sync with server in background
     try {
-      // Update time entry on server
       const response = await fetch(`/api/time-entries/${activeTimeEntry.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          taskId: activeTimeEntry.taskId,
-          description: activeTimeEntry.description,
-          startTime: new Date(activeTimeEntry.startTime).toISOString(),
-          endTime: endTime.toISOString(),
-          hourlyRate: activeTimeEntry.hourlyRate,
-          notes: activeTimeEntry.notes,
-        }),
+        body: JSON.stringify(requestData),
       });
 
       if (response.ok) {
@@ -234,7 +286,7 @@ const LiveTracker: React.FC<LiveTrackerProps> = ({ className = "" }) => {
         // Update with real data from server
         updateTimeEntry(activeTimeEntry.id, serverTimeEntry);
 
-        // Trigger background sync
+        // Trigger background sync to ensure consistency
         syncAfterUpdate();
       } else {
         let errorData;
@@ -256,34 +308,21 @@ const LiveTracker: React.FC<LiveTrackerProps> = ({ className = "" }) => {
           contentType,
           error: errorData,
           timeEntryId: activeTimeEntry.id,
-          requestData: {
-            taskId: activeTimeEntry.taskId,
-            description: activeTimeEntry.description,
-            startTime: new Date(activeTimeEntry.startTime).toISOString(),
-            endTime: endTime.toISOString(),
-            hourlyRate: activeTimeEntry.hourlyRate,
-            notes: activeTimeEntry.notes,
-          },
+          requestData,
         });
 
-        // Update local state anyway for better UX
-        updateTimeEntry(activeTimeEntry.id, {
-          endTime,
-          duration,
-          totalAmount,
-          updatedAt: endTime,
-        });
+        // If server call fails, rollback to original data
+        updateTimeEntry(activeTimeEntry.id, originalTimeEntry);
+        alert("Failed to stop timer. Please try again.");
       }
     } catch (error) {
       console.error("Error updating time entry:", error);
 
-      // Update local state anyway for better UX
-      updateTimeEntry(activeTimeEntry.id, {
-        endTime,
-        duration,
-        totalAmount,
-        updatedAt: endTime,
-      });
+      // Rollback to original data on error
+      updateTimeEntry(activeTimeEntry.id, originalTimeEntry);
+      alert(
+        "Failed to stop timer. Please check your connection and try again."
+      );
     }
 
     // Clear the active entry after a short delay to show completion
