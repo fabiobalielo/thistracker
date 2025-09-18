@@ -1,17 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createGoogleAPIs } from "@/lib/google-apis";
-import { DataService } from "@/lib/data-service";
-
-let dataService: DataService | null = null;
-
-async function getDataService() {
-  if (!dataService) {
-    const apis = await createGoogleAPIs();
-    dataService = new DataService(apis.sheets, apis.drive);
-    await dataService.initialize();
-  }
-  return dataService;
-}
+import { createDataService } from "@/lib/api-utils";
 
 export async function GET(
   request: NextRequest,
@@ -19,7 +7,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const service = await getDataService();
+    const service = await createDataService();
     const projectsResponse = await service.getProjects();
 
     if (!projectsResponse.success) {
@@ -51,7 +39,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const data = await request.json();
-    const service = await getDataService();
+    const service = await createDataService();
     const response = await service.updateProject(id, data);
 
     if (!response.success) {
@@ -74,7 +62,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const service = await getDataService();
+    const service = await createDataService();
     const response = await service.deleteProject(id);
 
     if (!response.success) {

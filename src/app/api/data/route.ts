@@ -1,51 +1,22 @@
 import { NextResponse } from "next/server";
-import { createGoogleAPIs } from "@/lib/google-apis";
-import { DataService } from "@/lib/data-service";
-
-let dataService: DataService | null = null;
-
-async function getDataService() {
-  if (!dataService) {
-    const apis = await createGoogleAPIs();
-    dataService = new DataService(apis.sheets, apis.drive);
-    await dataService.initialize();
-  }
-  return dataService;
-}
+import { createDataService } from "@/lib/api-utils";
 
 export async function GET() {
   try {
     console.log("API: Starting user-scoped data fetch...");
 
-    const service = await getDataService();
+    const service = await createDataService();
     console.log(
       "API: DataService initialized successfully for authenticated user"
     );
 
-    // Fetch all data in a single operation
-    console.log("API: Fetching data from Google Sheets...");
-    const [
-      clientsResponse,
-      projectsResponse,
-      tasksResponse,
-      timeEntriesResponse,
-    ] = await Promise.all([
-      service.getClients(),
-      service.getProjects(),
-      service.getTasks(),
-      service.getTimeEntries({ limit: 1000 }),
-    ]);
+    // Fetch all data sequentially to avoid rate limiting
+    // This reduces the number of concurrent API calls to Google Sheets
+    console.log(
+      "API: Fetching data from Google Sheets (sequential to avoid rate limits)..."
+    );
 
-    console.log("API: Data fetch completed:", {
-      clients: clientsResponse.success ? clientsResponse.data?.length : 0,
-      projects: projectsResponse.success ? projectsResponse.data?.length : 0,
-      tasks: tasksResponse.success ? tasksResponse.data?.length : 0,
-      timeEntries: timeEntriesResponse.success
-        ? timeEntriesResponse.data?.length
-        : 0,
-    });
-
-    // Check for any errors
+    const clientsResponse = await service.getClients();
     if (!clientsResponse.success) {
       console.error("API: Failed to fetch clients:", clientsResponse.error);
       return NextResponse.json(
@@ -53,6 +24,8 @@ export async function GET() {
         { status: 500 }
       );
     }
+
+    const projectsResponse = await service.getProjects();
     if (!projectsResponse.success) {
       console.error("API: Failed to fetch projects:", projectsResponse.error);
       return NextResponse.json(
@@ -60,6 +33,8 @@ export async function GET() {
         { status: 500 }
       );
     }
+
+    const tasksResponse = await service.getTasks();
     if (!tasksResponse.success) {
       console.error("API: Failed to fetch tasks:", tasksResponse.error);
       return NextResponse.json(
@@ -67,6 +42,8 @@ export async function GET() {
         { status: 500 }
       );
     }
+
+    const timeEntriesResponse = await service.getTimeEntries({ limit: 1000 });
     if (!timeEntriesResponse.success) {
       console.error(
         "API: Failed to fetch time entries:",
@@ -77,6 +54,13 @@ export async function GET() {
         { status: 500 }
       );
     }
+
+    console.log("API: Data fetch completed:", {
+      clients: clientsResponse.data?.length || 0,
+      projects: projectsResponse.data?.length || 0,
+      tasks: tasksResponse.data?.length || 0,
+      timeEntries: timeEntriesResponse.data?.length || 0,
+    });
 
     // Return all data in a single response
     const responseData = {
@@ -94,6 +78,18 @@ export async function GET() {
       message: error instanceof Error ? error.message : "Unknown error",
       stack: error instanceof Error ? error.stack : undefined,
     });
+
+    // Check if it's a rate limiting error
+    if (error instanceof Error && error.message.includes("429")) {
+      console.error("API: Rate limiting error detected");
+      return NextResponse.json(
+        {
+          error: "Rate limit exceeded. Please wait a moment and try again.",
+          code: "RATE_LIMIT_EXCEEDED",
+        },
+        { status: 429 }
+      );
+    }
 
     // Check if it's an authentication error
     if (error instanceof Error && error.message.includes("access token")) {

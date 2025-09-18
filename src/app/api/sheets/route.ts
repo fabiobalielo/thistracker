@@ -1,24 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createGoogleAPIs } from "@/lib/google-apis";
-import { DataService } from "@/lib/data-service";
-
-let dataService: DataService | null = null;
-
-async function getDataService() {
-  if (!dataService) {
-    const apis = await createGoogleAPIs();
-    dataService = new DataService(apis.sheets, apis.drive);
-    await dataService.initialize();
-  }
-  return dataService;
-}
+import { createDataService } from "@/lib/api-utils";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get("action");
 
-    const service = await getDataService();
+    const service = await createDataService();
 
     switch (action) {
       case "info":
@@ -81,7 +69,7 @@ export async function GET(request: NextRequest) {
 // Initialize or reinitialize the Google Sheets integration
 export async function POST(request: NextRequest) {
   try {
-    const service = await getDataService();
+    const service = await createDataService();
 
     // Re-initialize to ensure everything is set up correctly
     await service.initialize();

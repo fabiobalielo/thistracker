@@ -1,17 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createGoogleAPIs } from "@/lib/google-apis";
-import { DataService } from "@/lib/data-service";
-
-let dataService: DataService | null = null;
-
-async function getDataService() {
-  if (!dataService) {
-    const apis = await createGoogleAPIs();
-    dataService = new DataService(apis.sheets, apis.drive);
-    await dataService.initialize();
-  }
-  return dataService;
-}
+import { createDataService } from "@/lib/api-utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,7 +10,7 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
 
-    const service = await getDataService();
+    const service = await createDataService();
     const response = await service.getTimeEntries({
       clientId: clientId || undefined,
       projectId: projectId || undefined,
@@ -48,7 +36,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
-    const service = await getDataService();
+    const service = await createDataService();
     const response = await service.createTimeEntry(data);
 
     if (!response.success) {

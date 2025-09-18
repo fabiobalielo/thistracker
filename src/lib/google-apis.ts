@@ -7,6 +7,39 @@ const GOOGLE_APIS = {
   sheets: "https://sheets.googleapis.com/v4",
 } as const;
 
+// Rate limiting utility
+class RateLimiter {
+  private requests: number[] = [];
+  private maxRequests: number;
+  private windowMs: number;
+
+  constructor(maxRequests: number = 50, windowMs: number = 60000) {
+    this.maxRequests = maxRequests;
+    this.windowMs = windowMs;
+  }
+
+  async waitIfNeeded(): Promise<void> {
+    const now = Date.now();
+
+    // Remove requests older than the window
+    this.requests = this.requests.filter((time) => now - time < this.windowMs);
+
+    // If we're at the limit, wait
+    if (this.requests.length >= this.maxRequests) {
+      const oldestRequest = Math.min(...this.requests);
+      const waitTime = this.windowMs - (now - oldestRequest) + 100; // Add 100ms buffer
+      console.log(`Rate limit reached, waiting ${waitTime}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
+    }
+
+    // Record this request
+    this.requests.push(now);
+  }
+}
+
+// Global rate limiter for Google Sheets API
+const sheetsRateLimiter = new RateLimiter(50, 60000); // 50 requests per minute
+
 // Note: Using drive.file scope means we can only access files created by this app
 // This is perfect for privacy - users only grant access to files we create
 
@@ -182,6 +215,9 @@ export class GoogleSheetsAPI {
       `Fetching spreadsheet metadata for ID: ${spreadsheetId} (user-scoped)`
     );
 
+    // Apply rate limiting
+    await sheetsRateLimiter.waitIfNeeded();
+
     const response = await fetch(
       `${GOOGLE_APIS.sheets}/spreadsheets/${spreadsheetId}`,
       {
@@ -224,6 +260,9 @@ export class GoogleSheetsAPI {
       `Updating sheet ${spreadsheetId}, range: ${range}, values: ${values.length} rows (user-scoped)`
     );
 
+    // Apply rate limiting
+    await sheetsRateLimiter.waitIfNeeded();
+
     const response = await fetch(
       `${GOOGLE_APIS.sheets}/spreadsheets/${spreadsheetId}/values/${range}?valueInputOption=USER_ENTERED`,
       {
@@ -258,6 +297,9 @@ export class GoogleSheetsAPI {
     console.log(
       `Fetching sheet values for spreadsheet ${spreadsheetId}, range: ${range} (user-scoped)`
     );
+
+    // Apply rate limiting
+    await sheetsRateLimiter.waitIfNeeded();
 
     const response = await fetch(
       `${GOOGLE_APIS.sheets}/spreadsheets/${spreadsheetId}/values/${range}`,
@@ -296,6 +338,9 @@ export class GoogleSheetsAPI {
     console.log(
       `Performing batch update on spreadsheet ${spreadsheetId} with ${requests.length} requests (user-scoped)`
     );
+
+    // Apply rate limiting
+    await sheetsRateLimiter.waitIfNeeded();
 
     const response = await fetch(
       `${GOOGLE_APIS.sheets}/spreadsheets/${spreadsheetId}:batchUpdate`,
